@@ -1,4 +1,5 @@
 const Card = require('../models/card');
+const user = require('../models/user');
 
 module.exports.findAllCards = (req, res) => {
   Card.find({})
@@ -9,14 +10,14 @@ module.exports.findAllCards = (req, res) => {
 module.exports.findAndDeleteCard = (req, res) => {
   const _id = req.params.id;
 
-  Card.findByIdAndDelete(_id)
+  Card.findOneAndDelete({ _id, owner: req.user._id })
     .orFail()
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.name === 'CastError') {
         res.status(400).send({ message: `Некорректно задан Id карточки ${err}` });
       } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Карточка не найдена' });
+        res.status(404).send({ message: 'Карточка не найдена или не может быть удалена пользователем' });
       } else {
         res.status(500).send({ message: `Ошибка сервера ${err}` });
       }

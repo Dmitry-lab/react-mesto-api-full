@@ -1,4 +1,9 @@
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+
+const SALT_ROUNDS = 10;
+const SECRET_KEY = '479f6120aa76a2ac2211367c8a3a88de940057af25eeacb789502425c98a9800';
 
 module.exports.findAllUsers = (req, res) => {
   User.find({})
@@ -22,9 +27,11 @@ module.exports.findUser = (req, res) => {
 };
 
 module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
+  const { name, about, avatar, email, password } = req.body;
+
+  bcrypt.hash(password, SALT_ROUNDS)
+    .then((hash) => User.create({ name, about, avatar, email, password: hash }))
+    .then((user) => res.status(201).send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(400).send({ message: `Ошибка создания пользователя ${err} Проверьте корректность переданных данных.` });
@@ -67,5 +74,24 @@ module.exports.updateUserAvatar = (req, res) => {
       } else {
         res.status(500).send({ message: `Ошибка сервера ${err}` });
       }
+    });
+};
+
+module.exports.login = (req, res) => {
+  const { email, password } = req.body;
+
+  User.findUserByCreditians(email, password)
+    .then((user) => {
+      const token = jwt.sign(
+        { _id: user._id },
+        SECRET_KEY,
+        { expiresIn: '7d' },
+      );
+
+      // res.send(token);
+      res.cookie('jwt', token, { httpOnly: true }).end();
+    })
+    .catch((err) => {
+      res.status(401).send({ message: `Ошибка авторизации ${err}`});
     });
 };
