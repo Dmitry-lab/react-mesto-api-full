@@ -1,32 +1,34 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const NotFoundError = require('../errors/not-found-error');
+const RequestError = require('../errors/request-error');
 
 const SALT_ROUNDS = 10;
 const SECRET_KEY = '479f6120aa76a2ac2211367c8a3a88de940057af25eeacb789502425c98a9800';
 
-module.exports.findAllUsers = (req, res) => {
+module.exports.findAllUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch((err) => res.status(500).send({ message: `Ошибка сервера ${err}` }));
+    .catch(next);
 };
 
-module.exports.findUser = (req, res) => {
+module.exports.findUser = (req, res, next) => {
   User.findById(req.params.id)
     .orFail()
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: `Некорректно задан Id пользователя ${err}` });
+        next(new RequestError('Некорректно задан Id пользователя'));
       } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Пользователь не найден' });
+        next(new NotFoundError('Пользователь не найден'));
       } else {
-        res.status(500).send({ message: `Ошибка сервера ${err}` });
+        next(err);
       }
     });
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const { name, about, avatar, email, password } = req.body;
 
   bcrypt.hash(password, SALT_ROUNDS)
@@ -34,32 +36,32 @@ module.exports.createUser = (req, res) => {
     .then((user) => res.status(201).send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: `Ошибка создания пользователя ${err} Проверьте корректность переданных данных.` });
+        next(new RequestError(`Ошибка создания пользователя ${err} Проверьте корректность переданных данных.`));
       } else {
-        res.status(500).send({ message: `Ошибка сервера ${err}` });
+        next(err);
       }
     });
 };
 
-module.exports.updateUserInfo = (req, res) => {
-  const { about } = req.body;
+module.exports.updateUserInfo = (req, res, next) => {
+  const { name, about } = req.body;
   const myId = req.user._id;
 
-  User.findByIdAndUpdate(myId, { about }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(myId, { name, about }, { new: true, runValidators: true })
     .orFail()
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: `Ошибка обновления информации пользователя ${err} Проверьте корректность переданных данных.` });
+        next(new RequestError(`Ошибка создания пользователя ${err} Проверьте корректность переданных данных.`));
       } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Пользователь не найден' });
+        next(new NotFoundError('Пользователь не найден'));
       } else {
-        res.status(500).send({ message: `Ошибка сервера ${err}` });
+        next(err);
       }
     });
 };
 
-module.exports.updateUserAvatar = (req, res) => {
+module.exports.updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
   const myId = req.user._id;
 
@@ -68,16 +70,16 @@ module.exports.updateUserAvatar = (req, res) => {
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: `Ошибка обновления информации пользователя ${err} Проверьте корректность переданных данных.` });
+        next(new RequestError(`Ошибка создания пользователя ${err} Проверьте корректность переданных данных.`));
       } else if (err.name === 'DocumentNotFoundError') {
-        res.status(404).send({ message: 'Пользователь не найден' });
+        next(new NotFoundError('Пользователь не найден'));
       } else {
-        res.status(500).send({ message: `Ошибка сервера ${err}` });
+        next(err);
       }
     });
 };
 
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   User.findUserByCreditians(email, password)
@@ -91,7 +93,5 @@ module.exports.login = (req, res) => {
       // res.send(token);
       res.cookie('jwt', token, { httpOnly: true }).end();
     })
-    .catch((err) => {
-      res.status(401).send({ message: `Ошибка авторизации ${err}`});
-    });
+    .catch(next);
 };
