@@ -29,7 +29,13 @@ module.exports.findUser = (req, res, next) => {
 };
 
 module.exports.createUser = (req, res, next) => {
-  const { name, about, avatar, email, password } = req.body;
+  const {
+    name = 'Я',
+    about = 'Обо мне',
+    avatar = 'https://klike.net/uploads/posts/2019-03/1551511801_1.jpg',
+    email,
+    password,
+  } = req.body;
 
   bcrypt.hash(password, SALT_ROUNDS)
     .then((hash) => User.create({ name, about, avatar, email, password: hash }))
