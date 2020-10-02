@@ -5,7 +5,7 @@ const NotFoundError = require('../errors/not-found-error');
 const RequestError = require('../errors/request-error');
 
 const SALT_ROUNDS = 10;
-const SECRET_KEY = '479f6120aa76a2ac2211367c8a3a88de940057af25eeacb789502425c98a9800';
+const LOCAL_KEY = '479f6120aa76a2ac2211367c8a3a88de940057af25eeacb789502425c98a9800';
 
 module.exports.findAllUsers = (req, res, next) => {
   User.find({})
@@ -81,12 +81,13 @@ module.exports.updateUserAvatar = (req, res, next) => {
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
+  const { NODE_ENV, JWT_SECRET } = process.env;
 
   User.findUserByCreditians(email, password)
     .then((user) => {
       const token = jwt.sign(
         { _id: user._id },
-        SECRET_KEY,
+        NODE_ENV === 'production' ? JWT_SECRET : LOCAL_KEY,
         { expiresIn: '7d' },
       );
 
