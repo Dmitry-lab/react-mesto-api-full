@@ -28,6 +28,21 @@ module.exports.findUser = (req, res, next) => {
     });
 };
 
+module.exports.findMe = (req, res, next) => {
+  User.findById(req.user._id)
+    .orFail()
+    .then((user) => res.send({ data: user }))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(new RequestError('Некорректно задан I пользователя'));
+      } else if (err.name === 'DocumentNotFoundError') {
+        next(new NotFoundError('Пользователь не найден'));
+      } else {
+        next(err);
+      }
+    });
+};
+
 module.exports.createUser = (req, res, next) => {
   const {
     name = 'Имя',
