@@ -14,9 +14,16 @@
 * node.js
 * express framework
 
-### Установка
+### Установка (только backend)
 
 1. Скачать архив проекта из репозитория
 2. Установить используемые в проекте заисимиости командой: npm i
 3. Запустить сервер командой: npm run start или npm run dev (запуск с hot-reload)
+
+#### Доступ к ресурсам
+
+1. IP-адрес сервера: 130.193.40.148
+2. Имя домена: api.myway.students.nomoreparties.co
+
+#### [Сервис Mesto - frontend + backend](https://www.myway.students.nomoreparties.co/)
 
