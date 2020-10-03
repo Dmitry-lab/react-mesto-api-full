@@ -1,4 +1,5 @@
 require('dotenv').config();
+const cors = require('cors');
 const express = require('express');
 const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
@@ -32,6 +33,7 @@ const limiter = rateLimit({
   max: 100,
 });
 
+app.use(cors({ origin: true }));
 app.use(limiter);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
