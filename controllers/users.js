@@ -30,7 +30,7 @@ module.exports.findUser = (req, res, next) => {
 
 module.exports.createUser = (req, res, next) => {
   const {
-    name = 'Я',
+    name = 'Имя',
     about = 'Обо мне',
     avatar = 'https://klike.net/uploads/posts/2019-03/1551511801_1.jpg',
     email,
