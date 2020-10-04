@@ -72,6 +72,7 @@ app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
   const errorJSON = statusCode === 500 ? { message: `Ошибка сервера ${err}` } : { message };
   res.status(statusCode).send(errorJSON);
+  next();
 });
 
 app.listen(PORT, () => {

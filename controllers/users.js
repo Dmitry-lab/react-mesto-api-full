@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const NotFoundError = require('../errors/not-found-error');
 const RequestError = require('../errors/request-error');
+const ConflictError = require('../errors/conflict-error');
 
 const SALT_ROUNDS = 10;
 const LOCAL_KEY = '479f6120aa76a2ac2211367c8a3a88de940057af25eeacb789502425c98a9800';
@@ -54,10 +55,14 @@ module.exports.createUser = (req, res, next) => {
 
   bcrypt.hash(password, SALT_ROUNDS)
     .then((hash) => User.create({ name, about, avatar, email, password: hash }))
-    .then((user) => res.status(201).send({ data: user }))
+    .then(() => {
+      res.status(201).send({ data: { name, about, avatar, email } });
+    })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new RequestError(`Ошибка создания пользователя ${err} Проверьте корректность переданных данных.`));
+      } else if (err.name === 'MongoError' && err.code === 11000) {
+        next(new ConflictError(`Ошибка создания пользователя ${err} пользователь с таким email уже существует.`));
       } else {
         next(err);
       }

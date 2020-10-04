@@ -1,6 +1,7 @@
 const Card = require('../models/card');
 const NotFoundError = require('../errors/not-found-error');
 const RequestError = require('../errors/request-error');
+const ForbiddenError = require('../errors/forbidden-error');
 
 module.exports.findAllCards = (req, res, next) => {
   Card.find({})
@@ -11,14 +12,21 @@ module.exports.findAllCards = (req, res, next) => {
 module.exports.findAndDeleteCard = (req, res, next) => {
   const _id = req.params.id;
 
-  Card.findOneAndDelete({ _id, owner: req.user._id })
+  Card.findById(_id)
     .orFail()
+    .then((card) => {
+      const cardOwnerId = Buffer.from(card.owner.id).toString('hex');
+      if (cardOwnerId === req.user._id) {
+        return Card.findByIdAndDelete(_id);
+      }
+      return Promise.reject(new ForbiddenError('Карточка не может быть удалаена этим пользователем'));
+    })
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new RequestError('Некорректно задан Id карточки'));
       } else if (err.name === 'DocumentNotFoundError') {
-        next(new NotFoundError('Карточка не найдена или не может быть удалена пользователем'));
+        next(new NotFoundError('Карточка не найдена'));
       } else {
         next(err);
       }
@@ -29,7 +37,7 @@ module.exports.createCard = (req, res, next) => {
   const { name, link, likes, createdAt } = req.body;
   const ownerId = req.user._id;
 
-  Card.create({ name, link, owner: ownerId, likes, createdAt})
+  Card.create({ name, link, owner: ownerId, likes, createdAt })
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
