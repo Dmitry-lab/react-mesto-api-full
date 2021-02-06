@@ -7,9 +7,6 @@
 запоминает проставленные пользователями лайки.
 
 ## Используемые технологии
-* HTML
-* CSS, Flexbox, Grid Layout
-* Figma
 * Java Script
 * node.js
 * express framework
