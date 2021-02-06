@@ -20,7 +20,7 @@
 #### Доступ к ресурсам
 
 1. IP-адрес сервера: 130.193.41.227
-2. Имя домена: api.myway.students.nomoreparties.co
+2. Имя домена: api.myway.students.nomoreparties.space
 
 #### [Сервис Mesto - frontend + backend](https://www.myway.students.nomoreparties.space/)
 
